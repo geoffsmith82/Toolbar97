@@ -38,6 +38,22 @@ uses
 type
   { TCustomToolbar97 }
 
+  { Used in TCustomToolbar97.SlaveInfo lists }
+  PSlaveInfo = ^TSlaveInfo;
+  TSlaveInfo = record
+    LeftRight,
+    TopBottom: TControl;
+  end;
+
+  { Used in TCustomToolbar97.LineSeps lists }
+  PLineSep = ^TLineSep;
+  TLineSep = packed record
+    Y: SmallInt;
+    Blank: Boolean;
+    Unused: Boolean;
+  end;
+
+
   TToolbarParams = record
     InitializeOrderByPosition, DesignOrderByPosition: Boolean;
   end;
@@ -242,19 +258,7 @@ type
     Members: TList;
   end;
 
-  { Used in TCustomToolbar97.SlaveInfo lists }
-  PSlaveInfo = ^TSlaveInfo;
-  TSlaveInfo = record
-    LeftRight,
-    TopBottom: TControl;
-  end;
 
-  { Used in TCustomToolbar97.LineSeps lists }
-  TLineSep = packed record
-    Y: SmallInt;
-    Blank: Boolean;
-    Unused: Boolean;
-  end;
 
   { Use by CompareControls }
   PCompareExtra = ^TCompareExtra;
@@ -263,6 +267,20 @@ type
     ComparePositions: Boolean;
     CurDockType: TDockType;
   end;
+
+function SmallPointToPointPointer(const P: TSmallPoint): PPoint;
+begin
+  Result := AllocMem(SizeOf(TPoint));
+  Result.X := P.X;
+  Result.Y := P.Y;
+end;
+
+function PointToSmallPointPointer(const P: TPoint): PSmallPoint;
+begin
+  Result := AllocMem(sizeof(TSmallPoint));
+  Result.X := P.X;
+  Result.Y := P.Y;
+end;
 
 
 { TCustomToolbar97 }
@@ -418,13 +436,13 @@ begin
   { Long separators when not docked }
   if not Docked then
     for S := 0 to LineSeps.Count-1 do begin
-      with TLineSep(LineSeps[S]) do begin
-        if Blank then Continue;
+//      with TLineSep(LineSeps[S]) do begin
+        if PLineSep(LineSeps[S]).Blank then Continue;
         Canvas.Pen.Color := clBtnShadow;
-        Canvas.MoveTo (1, Y-4);  Canvas.LineTo (ClientWidth-1, Y-4);
+        Canvas.MoveTo (1, PLineSep(LineSeps[S]).Y-4);  Canvas.LineTo (ClientWidth-1, PLineSep(LineSeps[S]).Y-4);
         Canvas.Pen.Color := clBtnHighlight;
-        Canvas.MoveTo (1, Y-3);  Canvas.LineTo (ClientWidth-1, Y-3);
-      end;
+        Canvas.MoveTo (1, PLineSep(LineSeps[S]).Y-3);  Canvas.LineTo (ClientWidth-1, PLineSep(LineSeps[S]).Y-3);
+//      end;
     end;
 end;
 
@@ -632,7 +650,7 @@ begin
                 LongInt(NewLineSep) := 0;
                 NewLineSep.Y := CurLinePixel;
                 NewLineSep.Blank := PreviousSep.Blank;
-                LineSeps.Add (Pointer(NewLineSep));
+                LineSeps.Add (@NewLineSep);
               end;
             end;
           end;
@@ -745,9 +763,9 @@ function CompareNewSizes (const Item1, Item2, ExtraData: Pointer): Integer; far;
 begin
   { Sorts in descending order }
   if ExtraData = nil then
-    Result := TSmallPoint(Item2).X - TSmallPoint(Item1).X
+    Result := PSmallPoint(Item2).X - PSmallPoint(Item1).X
   else
-    Result := TSmallPoint(Item2).Y - TSmallPoint(Item1).Y;
+    Result := PSmallPoint(Item2).Y - PSmallPoint(Item1).Y;
 end;
 
 procedure TCustomToolbar97.BuildPotentialSizesList (SizesList: TList);
@@ -763,7 +781,7 @@ begin
     { Add the widest size to the list }
     FFloatingRightX := 0;
     S := OrderControls(False, dtNotDocked, nil);
-    SizesList.Add (Pointer(PointToSmallPoint(S)));
+    SizesList.Add (PointToSmallPointPointer(S));
     { Calculate and add rest of sizes to the list }
     LastY := S.Y;
     X := S.X-1;
@@ -777,8 +795,8 @@ begin
         if (S.Y = LastY) and (SizesList.Count > 1) then
           SizesList.Delete (SizesList.Count-1);
         S2 := PointToSmallPoint(S);
-        if SizesList.IndexOf(Pointer(S2)) = -1 then
-          SizesList.Add (Pointer(S2));
+        if SizesList.IndexOf(@S2) = -1 then
+          SizesList.Add (@S2);
         LastY := S.Y;
         Dec (X);
       end
@@ -794,9 +812,10 @@ procedure TCustomToolbar97.ResizeBegin (ASizeHandle: TToolWindowSizeHandle);
 const
   MaxSizeSens = 12;
 var
-  I, NewSize: Integer;
-  S, N: TSmallPoint;
-  P: TPoint;
+  I : Integer;
+  NewSize: Integer;
+  S, N: PSmallPoint;
+  P: PPoint;
 begin
   inherited;
 
@@ -811,9 +830,9 @@ begin
     NewSizes := TList.Create;
     BuildPotentialSizesList (NewSizes);
     for I := 0 to NewSizes.Count-1 do begin
-      P := SmallPointToPoint(TSmallPoint(NewSizes.List[I]));
-      AddFloatingNCAreaToSize (P);
-      NewSizes.List[I] := Pointer(PointToSmallPoint(P));
+      P := SmallPointToPointPointer(PSmallPoint(NewSizes.List[I])^);
+      AddFloatingNCAreaToSize (P^);
+      NewSizes.List[I] := PPoint(PointToSmallPointPointer(P^));
     end;
     ListSortEx (NewSizes, CompareNewSizes,
       Pointer(Ord(ASizeHandle in [twshTop, twshBottom])));
@@ -821,10 +840,10 @@ begin
     SizeSens := MaxSizeSens;
     { Adjust sensitivity if it's too high }
     for I := 0 to NewSizes.Count-1 do begin
-      Pointer(S) := NewSizes[I];
+      S := NewSizes[I];
       if (S.X = Width) and (S.Y = Height) then begin
         if I > 0 then begin
-          Pointer(N) := NewSizes[I-1];
+          N := NewSizes[I-1];
           if ASizeHandle in [twshLeft, twshRight] then
             NewSize := N.X - S.X - 1
           else
@@ -832,7 +851,7 @@ begin
           if NewSize < SizeSens then SizeSens := NewSize;
         end;
         if I < NewSizes.Count-1 then begin
-          Pointer(N) := NewSizes[I+1];
+          N := NewSizes[I+1];
           if ASizeHandle in [twshLeft, twshRight] then
             NewSize := S.X - N.X - 1
           else
@@ -853,7 +872,7 @@ var
   NewOpSide: Boolean;
   Reverse: Boolean;
   I: Integer;
-  P: TSmallPoint;
+  P: PSmallPoint;
 begin
   inherited;
 
@@ -900,7 +919,7 @@ begin
       if (not Reverse and (I < 0)) or
          (Reverse and (I >= NewSizes.Count)) then
         Break;
-      Pointer(P) := NewSizes[I];
+      P := NewSizes[I];
       if SizeHandle in [twshLeft, twshRight] then begin
         if (not Reverse and ((I = NewSizes.Count-1) or (Pos.X >= P.X))) or
            (Reverse and ((I = 0) or (Pos.X < P.X))) then begin

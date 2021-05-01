@@ -864,12 +864,14 @@ const
               end;
             Dec (CurBit);
             if CurBit < 0 then begin
-              Inc (Integer(MonoPixel));
+              Inc (MonoPixel);
               CurBit := 7;
             end;
-            Inc (Integer(Pixel), SizeOf(Longint));  { proceed to the next pixel }
+            Inc (Pixel, SizeOf(Longint));  { proceed to the next pixel }
           end;
-          Integer(MonoPixel) := Integer(StartMonoPixel) + MonoScanLineSize;
+          {$POINTERMATH ON}
+          MonoPixel := StartMonoPixel + MonoScanLineSize;
+          {$POINTERMATH OFF}
         end;
       finally
         FreeMem (Pixels);
@@ -2184,7 +2186,7 @@ begin
                   WM_LBUTTONDOWN, WM_LBUTTONDBLCLK,
                   WM_RBUTTONDOWN, WM_RBUTTONDBLCLK,
                   WM_MBUTTONDOWN, WM_MBUTTONDBLCLK: begin
-                      P := SmallPointToPoint(TSmallPoint(lParam));
+                      P := SmallPointToPoint(TSmallPoint(UInt32(lParam)));
                       Windows.ClientToScreen (hwnd, P);
                       if FindDragTarget(P, True) = Self then
                         Repost := False;
