@@ -32,7 +32,7 @@ interface
 {$I TB97Ver.inc}
 
 uses
-  Windows, Messages, Classes, Controls, Graphics,
+  Windows, Messages, Classes, Controls, Graphics, Types,
   TB97;
 
 type

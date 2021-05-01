@@ -55,7 +55,7 @@ unit TB97;
 interface
 
 uses
-  Windows, Messages, Classes, Controls, Forms, Graphics,
+  Windows, Messages, Classes, Controls, Forms, Graphics, Types,
   TB97Vers;
 
 const
@@ -431,9 +431,9 @@ type
   end;
 
 procedure RegLoadToolbarPositions (const Form: {$IFDEF TB97D3} TCustomForm {$ELSE} TForm {$ENDIF}; const BaseRegistryKey: String);
-procedure RegLoadToolbarPositionsEx (const Form: {$IFDEF TB97D3} TCustomForm {$ELSE} TForm {$ENDIF}; const RootKey: DWORD; const BaseRegistryKey: String);
+procedure RegLoadToolbarPositionsEx (const Form: TCustomForm; const RootKey: HKEY; const BaseRegistryKey: String);
 procedure RegSaveToolbarPositions (const Form: {$IFDEF TB97D3} TCustomForm {$ELSE} TForm {$ENDIF}; const BaseRegistryKey: String);
-procedure RegSaveToolbarPositionsEx (const Form: {$IFDEF TB97D3} TCustomForm {$ELSE} TForm {$ENDIF}; const RootKey: DWORD; const BaseRegistryKey: String);
+procedure RegSaveToolbarPositionsEx (const Form: TCustomForm; const RootKey: HKEY; const BaseRegistryKey: String);
 procedure IniLoadToolbarPositions (const Form: {$IFDEF TB97D3} TCustomForm {$ELSE} TForm {$ENDIF}; const Filename, SectionNamePrefix: String);
 procedure IniSaveToolbarPositions (const Form: {$IFDEF TB97D3} TCustomForm {$ELSE} TForm {$ENDIF}; const Filename, SectionNamePrefix: String);
 
@@ -1937,14 +1937,12 @@ begin
   TRegIniFile(ExtraData).WriteString (ToolbarName, Value, Data);
 end;
 
-procedure RegLoadToolbarPositions (const Form: {$IFDEF TB97D3} TCustomForm {$ELSE} TForm {$ENDIF};
-  const BaseRegistryKey: String);
+procedure RegLoadToolbarPositions (const Form: TCustomForm; const BaseRegistryKey: String);
 begin
   RegLoadToolbarPositionsEx (Form, HKEY_CURRENT_USER, BaseRegistryKey);
 end;
 
-procedure RegLoadToolbarPositionsEx (const Form: {$IFDEF TB97D3} TCustomForm {$ELSE} TForm {$ENDIF};
-  const RootKey: DWORD; const BaseRegistryKey: String);
+procedure RegLoadToolbarPositionsEx (const Form: TCustomForm; const RootKey: HKEY; const BaseRegistryKey: String);
 var
   Reg: TRegIniFile;
 begin
@@ -1958,14 +1956,12 @@ begin
   end;
 end;
 
-procedure RegSaveToolbarPositions (const Form: {$IFDEF TB97D3} TCustomForm {$ELSE} TForm {$ENDIF};
-  const BaseRegistryKey: String);
+procedure RegSaveToolbarPositions (const Form: TCustomForm; const BaseRegistryKey: String);
 begin
   RegSaveToolbarPositionsEx (Form, HKEY_CURRENT_USER, BaseRegistryKey);
 end;
 
-procedure RegSaveToolbarPositionsEx (const Form: {$IFDEF TB97D3} TCustomForm {$ELSE} TForm {$ENDIF};
-  const RootKey: DWORD; const BaseRegistryKey: String);
+procedure RegSaveToolbarPositionsEx (const Form: TCustomForm; const RootKey: HKEY; const BaseRegistryKey: String);
 var
   Reg: TRegIniFile;
 begin

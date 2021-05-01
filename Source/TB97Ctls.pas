@@ -33,7 +33,7 @@ interface
 
 uses
   Windows, Messages, Classes, Controls, Forms, Menus, Graphics, Buttons,
-  {$IFDEF TB97D4} ImgList, ActnList, {$ENDIF} StdCtrls, ExtCtrls,
+  {$IFDEF TB97D4} ImgList, ActnList, {$ENDIF} StdCtrls, ExtCtrls, Types,
   TB97Vers;
 
 const
@@ -1538,14 +1538,10 @@ begin
     ArrowPos.Y := GlyphPos.Y + (GlyphSize.Y - ArrowSize.Y) div 2;
 
   { fixup the result variables }
-  with GlyphPos do begin
-    Inc (X, Client.Left + Offset.X);
-    Inc (Y, Client.Top + Offset.Y);
-  end;
-  with ArrowPos do begin
-    Inc (X, Client.Left + Offset.X);
-    Inc (Y, Client.Top + Offset.Y);
-  end;
+    Inc (GlyphPos.X, Client.Left + Offset.X);
+    Inc (GlyphPos.Y, Client.Top + Offset.Y);
+    Inc (ArrowPos.X, Client.Left + Offset.X);
+    Inc (ArrowPos.Y, Client.Top + Offset.Y);
   OffsetRect (TextBounds, TextPos.X + Client.Left + Offset.X,
     TextPos.Y + Client.Top + Offset.X);
 end;
